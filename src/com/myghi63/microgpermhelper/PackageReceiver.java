@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 
-/** Mass pass for allowlisted apps on install/update (config "mass" list). */
+/** Blanket link pass for an installed/updated app (skips config "deny" list). */
 public final class PackageReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -21,6 +21,6 @@ public final class PackageReceiver extends BroadcastReceiver {
         // after PACKAGE_ADDED; run the approval pass after a short delay.
         final Context app = context.getApplicationContext();
         new Handler(Looper.getMainLooper()).postDelayed(
-                () -> Helper.applyMassForPackage(app, pkg), 3000);
+                () -> Helper.applyLinksForPackage(app, pkg), 3000);
     }
 }

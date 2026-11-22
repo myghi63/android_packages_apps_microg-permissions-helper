@@ -2,6 +2,7 @@ package com.myghi63.microgpermhelper;
 
 import android.app.AppOpsManager;
 import android.content.Context;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.verify.domain.DomainOwner;
 import android.content.pm.verify.domain.DomainVerificationManager;
@@ -22,9 +23,9 @@ import java.util.Set;
 /**
  * Applies the permission defaults described in assets/config.json:
  *  - "core": AppOps modes + approved web links for the fixed microG-stack apps;
- *  - "mass": allowlisted apps whose declared-but-unverified web domains ("supported
- *            links") are approved automatically, never taking a domain away from a
- *            non-overrideable (verified) owner.
+ *  - blanket link pass: every installed app's declared-but-unverified web domains
+ *    ("supported links") are approved automatically, except packages in "deny";
+ *    a domain is never taken away from a non-overrideable (verified) owner.
  */
 public final class Helper {
     private static final String TAG = "MicrogPermHelper";
@@ -45,26 +46,30 @@ public final class Helper {
                         strList(entry.optJSONArray("appops")),
                         strList(entry.optJSONArray("domains")));
             }
-            // Apps installed before this helper existed still get one mass pass.
-            for (String pkg : strList(cfg.optJSONArray("mass"))) {
-                enableLinks(dvm, pkg, null);
+            // Blanket pass over everything already installed.
+            List<String> denied = strList(cfg.optJSONArray("deny"));
+            for (PackageInfo pi : ctx.getPackageManager().getInstalledPackages(0)) {
+                if (denied.contains(pi.packageName)) {
+                    continue;
+                }
+                enableLinks(dvm, pi.packageName, null);
             }
         } catch (Exception ex) {
             Log.e(TAG, "applyCore failed", ex);
         }
     }
 
-    public static void applyMassForPackage(Context ctx, String pkg) {
+    public static void applyLinksForPackage(Context ctx, String pkg) {
         try {
             JSONObject cfg = loadConfig(ctx);
-            if (!strList(cfg.optJSONArray("mass")).contains(pkg)) {
+            if (strList(cfg.optJSONArray("deny")).contains(pkg)) {
                 return;
             }
             DomainVerificationManager dvm =
                     ctx.getSystemService(DomainVerificationManager.class);
             enableLinks(dvm, pkg, null);
         } catch (Exception ex) {
-            Log.e(TAG, "applyMassForPackage failed for " + pkg, ex);
+            Log.e(TAG, "applyLinksForPackage failed for " + pkg, ex);
         }
     }
 
@@ -88,7 +93,7 @@ public final class Helper {
 
     /**
      * Approve web domains of pkg still at DOMAIN_STATE_NONE. desired == null means
-     * every declared domain (mass mode). Verified domains need nothing: the
+     * every declared domain (blanket pass). Verified domains need nothing: the
      * platform approves them on its own.
      */
     private static void enableLinks(DomainVerificationManager dvm, String pkg,
@@ -96,7 +101,9 @@ public final class Helper {
         try {
             DomainVerificationUserState state = dvm.getDomainVerificationUserState(pkg);
             if (state == null) {
-                Log.d(TAG, "no web-intent state for " + pkg);
+                if (desired != null) {
+                    Log.d(TAG, "no web-intent state for " + pkg);
+                }
                 return;
             }
             Set<String> enable = new ArraySet<>();

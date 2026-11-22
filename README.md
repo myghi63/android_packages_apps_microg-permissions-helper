@@ -23,11 +23,11 @@ via `default-permissions.xml`. Built by the LineageOS tree; integrated by
 
 - **Core** — first `BOOT_COMPLETED` per user (also after a helper data wipe):
   sets the AppOps modes and enables the configured domains of the fixed microG-stack
-  apps, plus one mass pass for `mass` apps already installed. Guarded by the
-  `core_done_v1` marker in SharedPreferences (`helper_state`); bump the key in
-  `BootReceiver.java` to force a re-run after a config change.
-- **Mass** — `PACKAGE_ADDED`/`PACKAGE_REPLACED` (3s delay, so the domain state is
-  already collected): for packages in the `mass` allowlist, every declared-but-
+  apps, plus one blanket pass enabling every installed app's supported links (except
+  `deny`). Guarded by the `core_done_v2` marker in SharedPreferences (`helper_state`);
+  bump the key in `BootReceiver.java` to force a re-run after a config change.
+- **On install/update** — `PACKAGE_ADDED`/`PACKAGE_REPLACED` (3s delay, so the domain
+  state is already collected): for any package not in `deny`, every declared-but-
   unverified web domain of that app ("supported links", often hundreds per app)
   is approved at once. Verified domains (autoVerify) need nothing — the platform
   approves them by itself.
@@ -41,7 +41,7 @@ via `default-permissions.xml`. Built by the LineageOS tree; integrated by
       "appops": ["android:request_install_packages"],
       "domains": ["play.google.com", "market.android.com"] }
   ],
-  "mass": ["com.mercadolibre"]
+  "deny": []
 }
 ```
 
@@ -52,8 +52,10 @@ via `default-permissions.xml`. Built by the LineageOS tree; integrated by
   (`"app.goo.gl"` matches `"page.app.goo.gl"`). Only domains the app actually
   declares in its manifest web-intent filters can be approved — undeclared entries
   are silently skipped (they never appear in the app's domain state).
-- `mass`: packages whose *all* declared unverified domains get approved on
-  install/update. Add apps here as needed; no code change required.
+- `deny`: packages exempt from the blanket link approval (link-hijack suspects, apps
+  with links you open somewhere else). Blanket approval mirrors what Google Play does
+  on stock devices; add an app here only if you want its links left unapproved.
+  No code change required.
 
 ## Security note
 
@@ -61,7 +63,8 @@ Mass approval can transfer a domain that another app had only *user-selected*
 (the platform hands overrideable owners over automatically, same as the Settings
 UI does). Domains already held by a *verified* (non-overrideable) owner are never
 taken — the helper detects them via `getOwnersForDomain`, skips the domain and
-logs it. Keep `mass` to apps you trust; that allowlist is the whole defense.
+logs it. Blanket approval trusts whatever an app *declares*; the `deny` list is
+the opt-out for apps you do not want claiming links.
 
 ## Build wiring
 

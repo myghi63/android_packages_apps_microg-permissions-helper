@@ -9,7 +9,7 @@ import android.content.SharedPreferences;
  *  assets/config.json, bump KEY_CORE_DONE (e.g. to core_done_v2) and rebuild. */
 public final class BootReceiver extends BroadcastReceiver {
     private static final String PREFS = "helper_state";
-    private static final String KEY_CORE_DONE = "core_done_v1";
+    private static final String KEY_CORE_DONE = "core_done_v2";
 
     @Override
     public void onReceive(Context context, Intent intent) {
