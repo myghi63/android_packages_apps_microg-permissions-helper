@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+  SPDX-License-Identifier: GPL-3.0-or-later
+  Copyright (C) 2026 Myghi63
+-->
+<!--
     Headless helper: applies the microG-stack permission defaults that the
     platform cannot express via default-permissions.xml (AppOps modes and
     approved web links). Platform-signed, installed at /product/priv-app.

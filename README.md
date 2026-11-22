@@ -106,3 +106,8 @@ the opt-out for apps you do not want claiming links.
   defaults for its listed apps in other ROMs).
 - Google sync adapters (calendar/contacts): GmsCore carries its own; if a separate
   adapter package ever needs defaults, add it to `core` — no code change needed.
+
+## License
+
+GPL-3.0-or-later (`LICENSE`). Runtime permission / AppOps / web-link defaults in one
+small platform-signed app, GPL so that downstream improvements stay open.
