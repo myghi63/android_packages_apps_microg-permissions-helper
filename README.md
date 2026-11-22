@@ -38,15 +38,16 @@ via `default-permissions.xml`. Built by the LineageOS tree; integrated by
 {
   "core": [
     { "package": "com.aurora.store",
-      "appops": ["REQUEST_INSTALL_PACKAGES"],
+      "appops": ["android:request_install_packages"],
       "domains": ["play.google.com", "market.android.com"] }
   ],
   "mass": ["com.mercadolibre"]
 }
 ```
 
-- `appops`: AppOps op names (same strings `adb shell appops` accepts), always set to
-  `MODE_ALLOWED`.
+- `appops`: AppOps long op names (`AppOpsManager.OPSTR_*`, the `android:` form that
+  `strOpToOp` accepts — the short names `adb shell appops` maps internally are NOT
+  accepted here), always set to `MODE_ALLOWED`.
 - `domains`: exact hosts to enable. A plain entry also matches subdomains
   (`"app.goo.gl"` matches `"page.app.goo.gl"`). Only domains the app actually
   declares in its manifest web-intent filters can be approved — undeclared entries
