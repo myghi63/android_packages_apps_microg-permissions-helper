@@ -18,6 +18,10 @@
       "permissions": "all"
     },
     {
+      "package": "com.google.android.gsf",
+      "permissions": "all"
+    },
+    {
       "package": "org.fdroid.fdroid",
       "appops": ["android:request_install_packages"],
       "permissions": "all",
