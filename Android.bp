@@ -1,0 +1,11 @@
+android_app {
+    name: "microg-permissions-helper",
+
+    srcs: ["src/**/*.java"],
+
+    certificate: "platform",
+    privileged: true,
+    product_specific: true,
+
+    platform_apis: true,
+}

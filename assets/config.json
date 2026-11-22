@@ -1,0 +1,26 @@
+{
+  "core": [
+    {
+      "package": "com.aurora.store",
+      "appops": ["REQUEST_INSTALL_PACKAGES"],
+      "domains": ["play.google.com", "market.android.com"]
+    },
+    {
+      "package": "com.google.android.gms",
+      "appops": ["SYSTEM_ALERT_WINDOW"],
+      "domains": ["recaptcha.google.com", "app.goo.gl", "recaptcha.net"]
+    },
+    {
+      "package": "com.android.vending",
+      "appops": ["REQUEST_INSTALL_PACKAGES"]
+    },
+    {
+      "package": "org.fdroid.fdroid",
+      "appops": ["REQUEST_INSTALL_PACKAGES"],
+      "domains": ["f-droid.org", "cloudflare.f-droid.org", "staging.f-droid.org", "fdroid.link"]
+    }
+  ],
+  "mass": [
+    "com.mercadolibre"
+  ]
+}
