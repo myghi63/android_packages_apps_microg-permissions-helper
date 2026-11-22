@@ -4,9 +4,11 @@ import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PermissionInfo;
 import android.content.pm.verify.domain.DomainOwner;
 import android.content.pm.verify.domain.DomainVerificationManager;
 import android.content.pm.verify.domain.DomainVerificationUserState;
+import android.os.UserHandle;
 import android.util.ArraySet;
 import android.util.Log;
 
@@ -22,7 +24,8 @@ import java.util.Set;
 
 /**
  * Applies the permission defaults described in assets/config.json:
- *  - "core": AppOps modes + approved web links for the fixed microG-stack apps;
+ *  - "core": AppOps modes, approved web links and (opt-in "permissions") runtime
+ *    permission auto-grant for the fixed microG-stack apps;
  *  - blanket link pass: every installed app's declared-but-unverified web domains
  *    ("supported links") are approved automatically, except packages in "deny";
  *    a domain is never taken away from a non-overrideable (verified) owner.
@@ -44,7 +47,8 @@ public final class Helper {
                 JSONObject entry = core.getJSONObject(i);
                 applyEntry(ctx, ops, dvm, entry.getString("package"),
                         strList(entry.optJSONArray("appops")),
-                        strList(entry.optJSONArray("domains")));
+                        strList(entry.optJSONArray("domains")),
+                        entry.opt("permissions"));
             }
             // Blanket pass over everything already installed.
             List<String> denied = strList(cfg.optJSONArray("deny"));
@@ -59,7 +63,9 @@ public final class Helper {
         }
     }
 
-    public static void applyLinksForPackage(Context ctx, String pkg) {
+    /** Install/update pass: blanket link approval unless denied; runtime permission
+     *  auto-grant only for core-listed packages that opted in. */
+    public static void applyInstallPass(Context ctx, String pkg) {
         try {
             JSONObject cfg = loadConfig(ctx);
             if (strList(cfg.optJSONArray("deny")).contains(pkg)) {
@@ -68,13 +74,20 @@ public final class Helper {
             DomainVerificationManager dvm =
                     ctx.getSystemService(DomainVerificationManager.class);
             enableLinks(dvm, pkg, null);
+            JSONArray core = cfg.optJSONArray("core");
+            for (int i = 0; core != null && i < core.length(); i++) {
+                JSONObject entry = core.getJSONObject(i);
+                if (pkg.equals(entry.getString("package")) && entry.opt("permissions") != null) {
+                    grantPermissions(ctx, pkg, entry.opt("permissions"));
+                }
+            }
         } catch (Exception ex) {
-            Log.e(TAG, "applyLinksForPackage failed for " + pkg, ex);
+            Log.e(TAG, "applyInstallPass failed for " + pkg, ex);
         }
     }
 
     private static void applyEntry(Context ctx, AppOpsManager ops, DomainVerificationManager dvm,
-            String pkg, List<String> appops, List<String> domains) {
+            String pkg, List<String> appops, List<String> domains, Object permissions) {
         for (String op : appops) {
             try {
                 int uid = ctx.getPackageManager().getApplicationInfo(pkg, 0).uid;
@@ -88,6 +101,56 @@ public final class Helper {
         }
         if (!domains.isEmpty()) {
             enableLinks(dvm, pkg, domains);
+        }
+        if (permissions != null) {
+            grantPermissions(ctx, pkg, permissions);
+        }
+    }
+
+    /**
+     * Opt-in per core entry: "permissions": "all" grants every runtime permission
+     * the package requests but does not hold; a JSON array restricts the grant to
+     * those names. Only PROTECTION_DANGEROUS permissions are touched (runtime ones);
+     * grantRuntimePermission needs GRANT_RUNTIME_PERMISSIONS, which platform signing
+     * gives us automatically.
+     */
+    private static void grantPermissions(Context ctx, String pkg, Object permissions) {
+        try {
+            PackageManager pm = ctx.getPackageManager();
+            PackageInfo pi = pm.getPackageInfo(pkg, PackageManager.GET_PERMISSIONS);
+            String[] requested = pi.requestedPermissions != null
+                    ? pi.requestedPermissions : new String[0];
+            List<String> explicit = permissions instanceof JSONArray
+                    ? strList((JSONArray) permissions) : null;
+            UserHandle user = ctx.getUser();
+            int count = 0;
+            for (String perm : requested) {
+                if (pm.checkPermission(perm, pkg) == PackageManager.PERMISSION_GRANTED) {
+                    continue;
+                }
+                if (explicit != null && !explicit.contains(perm)) {
+                    continue;
+                }
+                if (!isRuntimePermission(pm, perm)) {
+                    continue;
+                }
+                pm.grantRuntimePermission(pkg, perm, user);
+                count++;
+            }
+            if (count > 0) {
+                Log.i(TAG, "granted " + count + " runtime permissions for " + pkg);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "runtime permission grant for " + pkg + " failed: " + e);
+        }
+    }
+
+    private static boolean isRuntimePermission(PackageManager pm, String perm) {
+        try {
+            return pm.getPermissionInfo(perm, 0).getProtection()
+                    == PermissionInfo.PROTECTION_DANGEROUS;
+        } catch (Exception e) {
+            return false;
         }
     }
 

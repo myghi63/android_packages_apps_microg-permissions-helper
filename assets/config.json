@@ -3,20 +3,24 @@
     {
       "package": "com.aurora.store",
       "appops": ["android:request_install_packages"],
+      "permissions": "all",
       "domains": ["play.google.com", "market.android.com"]
     },
     {
       "package": "com.google.android.gms",
       "appops": ["android:system_alert_window"],
+      "permissions": "all",
       "domains": ["recaptcha.google.com", "app.goo.gl", "recaptcha.net"]
     },
     {
       "package": "com.android.vending",
-      "appops": ["android:request_install_packages"]
+      "appops": ["android:request_install_packages"],
+      "permissions": "all"
     },
     {
       "package": "org.fdroid.fdroid",
       "appops": ["android:request_install_packages"],
+      "permissions": "all",
       "domains": ["f-droid.org", "cloudflare.f-droid.org", "staging.f-droid.org", "fdroid.link"]
     }
   ],

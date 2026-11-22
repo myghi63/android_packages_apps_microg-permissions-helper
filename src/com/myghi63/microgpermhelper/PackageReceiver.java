@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 
-/** Blanket link pass for an installed/updated app (skips config "deny" list). */
+/** Install/update pass (links blanket + opt-in core permissions); skips config "deny". */
 public final class PackageReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -21,6 +21,6 @@ public final class PackageReceiver extends BroadcastReceiver {
         // after PACKAGE_ADDED; run the approval pass after a short delay.
         final Context app = context.getApplicationContext();
         new Handler(Looper.getMainLooper()).postDelayed(
-                () -> Helper.applyLinksForPackage(app, pkg), 3000);
+                () -> Helper.applyInstallPass(app, pkg), 3000);
     }
 }
