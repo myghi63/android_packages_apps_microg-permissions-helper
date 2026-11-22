@@ -7,5 +7,7 @@ android_app {
     privileged: true,
     product_specific: true,
 
-    platform_apis: true,
+    // Product partition: PRODUCT_ENFORCE_PRODUCT_PARTITION_INTERFACE requires an
+    // explicit stable SDK. Everything this app calls is public or @SystemApi.
+    sdk_version: "system_current",
 }
