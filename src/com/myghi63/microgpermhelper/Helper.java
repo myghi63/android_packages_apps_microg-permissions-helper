@@ -37,7 +37,7 @@ public final class Helper {
             JSONObject cfg = loadConfig(ctx);
             AppOpsManager ops = ctx.getSystemService(AppOpsManager.class);
             DomainVerificationManager dvm =
-                    ctx.getSystemService(Context.DOMAIN_VERIFICATION_SERVICE);
+                    ctx.getSystemService(DomainVerificationManager.class);
             JSONArray core = cfg.optJSONArray("core");
             for (int i = 0; core != null && i < core.length(); i++) {
                 JSONObject entry = core.getJSONObject(i);
@@ -61,7 +61,7 @@ public final class Helper {
                 return;
             }
             DomainVerificationManager dvm =
-                    ctx.getSystemService(Context.DOMAIN_VERIFICATION_SERVICE);
+                    ctx.getSystemService(DomainVerificationManager.class);
             enableLinks(dvm, pkg, null);
         } catch (Exception ex) {
             Log.e(TAG, "applyMassForPackage failed for " + pkg, ex);
