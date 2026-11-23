@@ -26,6 +26,7 @@ import android.content.pm.PermissionInfo;
 import android.content.pm.verify.domain.DomainOwner;
 import android.content.pm.verify.domain.DomainVerificationManager;
 import android.content.pm.verify.domain.DomainVerificationUserState;
+import android.os.Process;
 import android.os.UserHandle;
 import android.util.ArraySet;
 import android.util.Log;
@@ -140,7 +141,9 @@ public final class Helper {
                     ? pi.requestedPermissions : new String[0];
             List<String> explicit = permissions instanceof JSONArray
                     ? strList((JSONArray) permissions) : null;
-            UserHandle user = ctx.getUser();
+            // Context.getUser() is @hide; the helper runs in the same user as the
+            // targets, so its own user handle is the right one.
+            UserHandle user = UserHandle.getUserHandleForUid(Process.myUid());
             int count = 0;
             for (String perm : requested) {
                 if (pm.checkPermission(perm, pkg) == PackageManager.PERMISSION_GRANTED) {
